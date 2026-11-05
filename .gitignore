@@ -20,3 +20,4 @@ database/backup/*.sql
 .DS_Store
 Thumbs.db
 .vscode/
+backend/run.log

@@ -85,6 +85,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/ngo/**").hasRole("NGO")
                         .requestMatchers("/api/volunteer/**").hasRole("VOLUNTEER")
+                        .requestMatchers("/actuator/health/**").permitAll()
                         .anyRequest().authenticated())
                 .exceptionHandling(e -> e
                         .authenticationEntryPoint((req, res, ex) -> writeError(res, 401, "Unauthorized",
@@ -117,3 +118,4 @@ public class SecurityConfig {
                 new ApiError(LocalDateTime.now().toString(), status, error, message, path, null));
     }
 }
+
