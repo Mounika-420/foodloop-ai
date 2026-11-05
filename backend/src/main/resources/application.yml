@@ -1,0 +1,58 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: foodloop-backend
+  datasource:
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:foodloop_ai}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Kolkata
+    username: ${DB_USER:root}
+    password: ${DB_PASSWORD:}
+    hikari:
+      maximum-pool-size: 10
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: none          # schema is owned by database/schema.sql, never auto-generated
+    properties:
+      hibernate:
+        jdbc.time_zone: Asia/Kolkata
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 25MB
+  mail:
+    host: ${MAIL_HOST:localhost}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:}                 # REQUIRED: any random string of 32+ characters. No default on purpose.
+    expiry-minutes: ${JWT_EXPIRY_MINUTES:15}
+  upload-dir: ${UPLOAD_DIR:./uploads}
+  frontend-base-url: ${FRONTEND_BASE_URL:http://localhost:5500}
+  rate-limit:
+    per-minute: ${RATE_LIMIT_PER_MINUTE:10}
+  mail:
+    enabled: ${MAIL_ENABLED:false}      # false = emails are only written to the log (no SMTP needed)
+    from: ${MAIL_FROM:no-reply@foodloop.local}
+  cors-allowed-origins: ${CORS_ORIGINS:http://localhost:5500,http://127.0.0.1:5500}
+
+ai:
+  service:
+    base-url: ${AI_SERVICE_BASE_URL:http://localhost:5000}
+    api-key: ${AI_SERVICE_API_KEY:}
+    connect-timeout-ms: 1000
+    read-timeout-ms: 3000
+
+logging:
+  level:
+    com.foodloop: INFO
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

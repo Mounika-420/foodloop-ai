@@ -1,0 +1,22 @@
+# secrets
+.env
+*.pem
+application-local.yml
+# Java
+backend/target/
+*.class
+.idea/
+*.iml
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+ai-service/models/*.joblib
+# uploads and local data
+backend/uploads/
+database/backup/*.sql
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
