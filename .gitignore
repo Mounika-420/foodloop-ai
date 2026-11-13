@@ -21,3 +21,5 @@ database/backup/*.sql
 Thumbs.db
 .vscode/
 backend/run.log
+
+backend/run-backend.ps1
