@@ -1,25 +1,20 @@
 package com.foodloop.repository;
 
-import com.foodloop.entity.*;
-import com.foodloop.entity.enums.*;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import com.foodloop.entity.PickupRequest;
+import com.foodloop.entity.enums.PickupStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
 
-import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
 
-@Repository
 public interface PickupRequestRepository extends JpaRepository<PickupRequest, Long> {
 
-    Optional<PickupRequest> findByDonation_Id(Long donationId);
+    boolean existsByDonation_Id(Long donationId);
 
-    List<PickupRequest> findByVolunteer_UserIdAndStatusIn(Long volunteerId, Collection<PickupStatus> statuses);
+    List<PickupRequest> findByStatusOrderByCreatedAtAsc(PickupStatus status);
 
-    List<PickupRequest> findByStatus(PickupStatus status);
+    List<PickupRequest> findByVolunteer_UserIdAndStatusInOrderByScheduledPickupAtAsc(
+            Long volunteerId, Collection<PickupStatus> statuses);
 
-    Page<PickupRequest> findByNgo_UserId(Long ngoId, Pageable pageable);
+    List<PickupRequest> findByNgo_UserIdOrderByCreatedAtDesc(Long ngoId);
 }
