@@ -23,3 +23,5 @@ Thumbs.db
 backend/run.log
 
 backend/run-backend.ps1
+
+.refact/
