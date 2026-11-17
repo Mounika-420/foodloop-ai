@@ -31,3 +31,5 @@ ai-service/models/*.joblib
 __pycache__/
 *.pyc
 .pytest_cache/
+
+ai-service/run-ai.ps1
