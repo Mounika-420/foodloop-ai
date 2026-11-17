@@ -70,6 +70,26 @@ public class MatchingService {
         this.objectMapper = objectMapper;
     }
 
+    private AiRanker aiRanker;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    public void setAiRanker(AiRanker aiRanker) {
+        this.aiRanker = aiRanker;
+    }
+
+    /** Rule-based hard filters first; the AI service (when configured) only re-orders the eligible NGOs. */
+    private List<RuleBasedMatcher.Result> rankWithAi(Donation d, RuleBasedMatcher.DonationInfo info,
+                                                     List<RuleBasedMatcher.Candidate> candidates) {
+        if (aiRanker == null || !aiRanker.isEnabled()) {
+            return RuleBasedMatcher.rank(info, candidates, TOP_N);
+        }
+        List<RuleBasedMatcher.Result> eligible = RuleBasedMatcher.rank(info, candidates, Integer.MAX_VALUE);
+        if (eligible.isEmpty()) {
+            return eligible;
+        }
+        return aiRanker.rerank(d.getId(), d.getCategory().getName(), info, eligible, candidates, TOP_N);
+    }
+
     /** Ranks NGOs for a freshly created donation. Returns how many offers were created. */
     @Transactional
     public int matchDonation(Donation d) {
@@ -107,7 +127,7 @@ public class MatchingService {
                 d.getPickupWindowEnd(),
                 d.getExpiresAt());
 
-        List<RuleBasedMatcher.Result> ranked = RuleBasedMatcher.rank(info, candidates, TOP_N);
+        List<RuleBasedMatcher.Result> ranked = rankWithAi(d, info, candidates);
         if (ranked.isEmpty()) {
             return 0;
         }
