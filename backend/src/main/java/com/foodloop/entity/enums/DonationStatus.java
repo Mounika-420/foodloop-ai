@@ -15,7 +15,7 @@ public enum DonationStatus {
         return switch (this) {
             case AVAILABLE -> EnumSet.of(MATCHED, CANCELLED, EXPIRED);
             case MATCHED -> EnumSet.of(ACCEPTED, REJECTED_ALL, CANCELLED, EXPIRED);
-            case ACCEPTED -> EnumSet.of(VOLUNTEER_ASSIGNED, CANCELLED);
+            case ACCEPTED -> EnumSet.of(VOLUNTEER_ASSIGNED, CANCELLED, EXPIRED);
             case VOLUNTEER_ASSIGNED -> EnumSet.of(PICKED_UP, CANCELLED);
             case PICKED_UP -> EnumSet.of(IN_TRANSIT);
             case IN_TRANSIT -> EnumSet.of(DELIVERED);
