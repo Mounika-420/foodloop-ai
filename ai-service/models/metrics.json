@@ -1,0 +1,97 @@
+{
+  "modelVersion": "1.0.0",
+  "trainedAt": "2026-11-17T11:52:00+00:00",
+  "randomSeed": 42,
+  "dataset": "synthetic",
+  "models": {
+    "surplus": {
+      "algorithm": "GradientBoostingRegressor",
+      "metrics": {
+        "mae": 1.9843,
+        "rmse": 2.9556,
+        "r2": 0.9605
+      },
+      "comparison": [
+        {
+          "algorithm": "LinearRegression",
+          "mae": 2.114,
+          "rmse": 2.9872,
+          "r2": 0.9596
+        },
+        {
+          "algorithm": "RandomForestRegressor",
+          "mae": 2.1366,
+          "rmse": 3.2336,
+          "r2": 0.9527
+        },
+        {
+          "algorithm": "GradientBoostingRegressor",
+          "mae": 1.9843,
+          "rmse": 2.9556,
+          "r2": 0.9605
+        }
+      ],
+      "trainRows": 4800,
+      "testRows": 1200,
+      "featureColumns": {
+        "categorical": [
+          "category",
+          "donorType",
+          "dayOfWeek",
+          "season",
+          "area"
+        ],
+        "numeric": [
+          "month",
+          "eventFlag",
+          "previousQuantityKg"
+        ]
+      },
+      "target": "surplusKg",
+      "dataset": "synthetic"
+    },
+    "demand": {
+      "algorithm": "RandomForestRegressor",
+      "metrics": {
+        "mae": 2.7504,
+        "rmse": 4.1627,
+        "r2": 0.9489
+      },
+      "comparison": [
+        {
+          "algorithm": "LinearRegression",
+          "mae": 8.6563,
+          "rmse": 11.4555,
+          "r2": 0.6127
+        },
+        {
+          "algorithm": "RandomForestRegressor",
+          "mae": 2.7504,
+          "rmse": 4.1627,
+          "r2": 0.9489
+        },
+        {
+          "algorithm": "GradientBoostingRegressor",
+          "mae": 3.2348,
+          "rmse": 4.962,
+          "r2": 0.9273
+        }
+      ],
+      "trainRows": 4000,
+      "testRows": 1000,
+      "featureColumns": {
+        "categorical": [
+          "category",
+          "area",
+          "dayOfWeek"
+        ],
+        "numeric": [
+          "month",
+          "hourOfDay"
+        ]
+      },
+      "target": "demandKg",
+      "dataset": "synthetic"
+    }
+  }
+}

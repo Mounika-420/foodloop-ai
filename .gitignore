@@ -25,3 +25,9 @@ backend/run.log
 backend/run-backend.ps1
 
 .refact/
+
+ai-service/.venv/
+ai-service/models/*.joblib
+__pycache__/
+*.pyc
+.pytest_cache/
