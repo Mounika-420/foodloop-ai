@@ -12,7 +12,7 @@
     ],
     NGO: [
       ['dashboard', 'Dashboard', 'bi-speedometer2'], ['available-donations', 'Available', 'bi-basket'],
-      ['recommended', 'Recommended', 'bi-stars'], ['requirements', 'Requirements', 'bi-list-check'],
+      ['recommended', 'Recommended', 'bi-stars'], ['requirements', 'Requirements', 'bi-list-check'], ['categories', 'Categories', 'bi-tags'],
       ['pickups', 'Pickups', 'bi-truck'], ['history', 'History', 'bi-clock-history'],
       ['analytics', 'Analytics', 'bi-graph-up'], ['profile', 'Profile', 'bi-person']
     ],
