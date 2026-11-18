@@ -3,6 +3,9 @@ package com.foodloop.exception;
 import com.foodloop.dto.ApiError;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.exc.InvalidFormatException;
+import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -52,10 +55,52 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.BAD_REQUEST, "Validation failed", req, errors);
     }
 
-    @ExceptionHandler({HttpMessageNotReadableException.class, MethodArgumentTypeMismatchException.class,
-            MissingServletRequestParameterException.class})
+    @ExceptionHandler(
+            MissingServletRequestParameterException.class)
     public ResponseEntity<ApiError> handleMalformed(Exception ex, HttpServletRequest req) {
         return build(HttpStatus.BAD_REQUEST, "Malformed or invalid request", req, null);
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiError> handleUnreadable(HttpMessageNotReadableException ex, HttpServletRequest req) {
+        Throwable t = ex;
+        for (int i = 0; i < 10 && t != null; i++, t = t.getCause()) {
+            if (t instanceof InvalidFormatException ife && !ife.getPath().isEmpty()) {
+                return invalidField(fieldPath(ife), ife.getTargetType(), req);
+            }
+        }
+        return build(HttpStatus.BAD_REQUEST, "Malformed or invalid request", req, null);
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ApiError> handleTypeMismatch(MethodArgumentTypeMismatchException ex, HttpServletRequest req) {
+        return invalidField(ex.getName(), ex.getRequiredType(), req);
+    }
+
+    /** Names the field and, for enums, the allowed values. The rejected value is never echoed back. */
+    private ResponseEntity<ApiError> invalidField(String field, Class<?> type, HttpServletRequest req) {
+        String problem = type != null && type.isEnum()
+                ? "must be one of " + Arrays.stream(type.getEnumConstants()).map(String::valueOf)
+                        .collect(java.util.stream.Collectors.joining(", "))
+                : "has an invalid format";
+        Map<String, String> errors = new LinkedHashMap<>();
+        errors.put(field, problem);
+        return build(HttpStatus.BAD_REQUEST, "Invalid value for '" + field + "'", req, errors);
+    }
+
+    private static String fieldPath(JsonMappingException e) {
+        StringBuilder sb = new StringBuilder();
+        for (JsonMappingException.Reference r : e.getPath()) {
+            if (r.getFieldName() != null) {
+                if (sb.length() > 0) {
+                    sb.append('.');
+                }
+                sb.append(r.getFieldName());
+            } else {
+                sb.append('[').append(r.getIndex()).append(']');
+            }
+        }
+        return sb.toString();
     }
 
     @ExceptionHandler(BadRequestException.class)
