@@ -90,6 +90,19 @@ public class MatchingService {
         return aiRanker.rerank(d.getId(), d.getCategory().getName(), info, eligible, candidates, TOP_N);
     }
 
+    private com.foodloop.repository.NgoAcceptedCategoryRepository acceptedCategories;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    public void setAcceptedCategories(com.foodloop.repository.NgoAcceptedCategoryRepository acceptedCategories) {
+        this.acceptedCategories = acceptedCategories;
+    }
+
+    /** An NGO that saved no categories accepts every category. */
+    static boolean acceptsCategory(Map<Long, java.util.Set<Integer>> accepted, Long ngoId, Integer categoryId) {
+        java.util.Set<Integer> ids = accepted.get(ngoId);
+        return ids == null || ids.isEmpty() || ids.contains(categoryId);
+    }
+
     /** Ranks NGOs for a freshly created donation. Returns how many offers were created. */
     @Transactional
     public int matchDonation(Donation d) {
@@ -99,9 +112,11 @@ public class MatchingService {
         Integer categoryId = d.getCategory().getId();
         List<RuleBasedMatcher.Candidate> candidates = new ArrayList<>();
         Map<Long, NgoProfile> byId = new java.util.HashMap<>();
+        Map<Long, java.util.Set<Integer>> accepted = acceptedCategories == null ? Map.of() : acceptedCategories.findAll();
         for (NgoProfile n : ngoProfileRepository.findByVerificationStatus(VerificationStatus.VERIFIED)) {
             User u = n.getUser();
-            if (u == null || u.getStatus() != UserStatus.ACTIVE || n.getLocation() == null) {
+            if (u == null || u.getStatus() != UserStatus.ACTIVE || n.getLocation() == null
+                    || !acceptsCategory(accepted, n.getUserId(), categoryId)) {
                 continue;
             }
             Location nl = n.getLocation();
