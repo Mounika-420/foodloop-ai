@@ -1,0 +1,51 @@
+/* Shared components: landing, auth card, cards, empty states, skeletons. */
+.fl-brand { color: var(--fl-primary); font-weight: 700; letter-spacing: -0.01em; }
+[data-bs-theme="dark"] .fl-brand { color: #81C784; }
+
+.fl-hero {
+  background: linear-gradient(135deg, var(--fl-primary-light) 0%, var(--fl-surface) 70%);
+  border-bottom: 1px solid var(--bs-border-color);
+}
+.fl-hero h1 { font-weight: 700; letter-spacing: -0.02em; }
+
+.fl-card {
+  background: var(--fl-surface);
+  border: 1px solid var(--bs-border-color);
+  border-radius: 12px;
+}
+
+.fl-icon-circle {
+  width: 48px; height: 48px; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--fl-primary-light); color: var(--fl-primary); font-size: 1.4rem;
+}
+[data-bs-theme="dark"] .fl-icon-circle { color: #81C784; }
+
+.fl-step-number {
+  width: 32px; height: 32px; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--fl-primary); color: #fff; font-weight: 600;
+}
+
+.fl-auth-wrap { min-height: calc(100vh - 56px); display: flex; align-items: center; justify-content: center; padding: 2rem 1rem; background: var(--fl-surface-2); }
+.fl-auth-card { width: 100%; max-width: 420px; padding: 2rem; }
+
+.fl-synthetic-badge {
+  display: inline-flex; align-items: center; gap: .35rem;
+  font-size: .8rem; padding: .25rem .6rem; border-radius: 999px;
+  background: var(--fl-primary-light); color: var(--fl-primary); border: 1px solid var(--fl-accent);
+}
+[data-bs-theme="dark"] .fl-synthetic-badge { color: #81C784; }
+
+.fl-empty { text-align: center; padding: 2.5rem 1rem; color: var(--bs-secondary-color); }
+.fl-empty i { font-size: 2.5rem; display: block; margin-bottom: .5rem; }
+
+.fl-skeleton {
+  display: block; border-radius: 6px; min-height: 1rem;
+  background: linear-gradient(90deg, var(--bs-secondary-bg) 25%, var(--bs-border-color) 50%, var(--bs-secondary-bg) 75%);
+  background-size: 200% 100%; animation: fl-shimmer 1.4s infinite;
+}
+@keyframes fl-shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+@media (prefers-reduced-motion: reduce) { .fl-skeleton { animation: none; } }
+
+.fl-footer { border-top: 1px solid var(--bs-border-color); color: var(--bs-secondary-color); }

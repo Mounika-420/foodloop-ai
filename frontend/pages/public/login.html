@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en" data-bs-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Log in · FoodLoop AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="../../css/theme.css" rel="stylesheet">
+  <link href="../../css/components.css" rel="stylesheet">
+  <script src="../../js/config.js"></script>
+  <script src="../../js/theme.js"></script>
+  <script src="../../js/auth.js"></script>
+  <script src="../../js/api.js"></script>
+  <script src="../../js/guard.js"></script>
+  <script>FoodLoopGuard.redirectIfLoggedIn();</script>
+</head>
+<body>
+  <nav class="navbar border-bottom bg-body" aria-label="Main">
+    <div class="container">
+      <a class="navbar-brand fl-brand" href="../../index.html"><i class="bi bi-recycle me-1" aria-hidden="true"></i>FoodLoop AI</a>
+      <button class="btn btn-outline-secondary btn-sm" type="button" data-theme-toggle></button>
+    </div>
+  </nav>
+
+  <main class="fl-auth-wrap">
+    <div class="fl-card fl-auth-card">
+      <h1 class="h3 mb-1">Welcome back</h1>
+      <p class="text-secondary mb-4">Log in to continue.</p>
+
+      <div id="notice" class="alert alert-info" role="status" hidden></div>
+      <div id="login-alert" class="alert alert-danger" role="alert" aria-live="assertive" hidden></div>
+
+      <form id="login-form" novalidate>
+        <div class="mb-3">
+          <label for="email" class="form-label">Email</label>
+          <input id="email" name="email" type="email" class="form-control" autocomplete="username" required autofocus>
+          <div class="invalid-feedback">Enter a valid email address.</div>
+        </div>
+        <div class="mb-3">
+          <label for="password" class="form-label">Password</label>
+          <div class="input-group has-validation">
+            <input id="password" name="password" type="password" class="form-control" autocomplete="current-password" required>
+            <button class="btn btn-outline-secondary" type="button" id="toggle-password" aria-label="Show password" aria-pressed="false">
+              <i class="bi bi-eye" aria-hidden="true"></i>
+            </button>
+            <div class="invalid-feedback">Enter your password.</div>
+          </div>
+        </div>
+        <div class="d-flex justify-content-end mb-3">
+          <a href="forgot-password.html" class="small">Forgot password?</a>
+        </div>
+        <button id="submit" type="submit" class="btn btn-primary w-100">Log in</button>
+      </form>
+
+      <p class="text-center small mt-4 mb-0">New here? <a href="register.html">Create an account</a></p>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="../../js/ui.js"></script>
+  <script>
+    (function () {
+      var Ui = FoodLoopUi, Auth = FoodLoopAuth;
+      var form = document.getElementById('login-form');
+      var alertBox = document.getElementById('login-alert');
+      var submit = document.getElementById('submit');
+      var params = new URLSearchParams(location.search);
+
+      var notice = document.getElementById('notice');
+      var notices = {
+        expired: 'Your session expired. Please log in again.',
+        registered: 'Account created. You can log in once any required verification is done.',
+        reset: 'Password changed. Log in with your new password.'
+      };
+      Object.keys(notices).forEach(function (k) {
+        if (params.get(k)) { notice.textContent = notices[k]; notice.hidden = false; }
+      });
+
+      document.getElementById('toggle-password').addEventListener('click', function () {
+        var input = document.getElementById('password');
+        var show = input.type === 'password';
+        input.type = show ? 'text' : 'password';
+        this.setAttribute('aria-pressed', String(show));
+        this.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+        this.innerHTML = '<i class="bi ' + (show ? 'bi-eye-slash' : 'bi-eye') + '" aria-hidden="true"></i>';
+      });
+
+      /** Only follow ?next= when it points into the page folder of the user's own role. */
+      function destination(user) {
+        var next = params.get('next');
+        var ownFolder = FoodLoopConfig.pageUrl('pages/' + user.role.toLowerCase() + '/');
+        return next && next.indexOf(ownFolder) === 0 ? next : Auth.homeFor(user.role);
+      }
+
+      form.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        Ui.clearAlert(alertBox);
+        var email = form.elements.email, password = form.elements.password;
+        email.classList.toggle('is-invalid', !email.value.trim() || !email.validity.valid);
+        password.classList.toggle('is-invalid', !password.value);
+        if (form.querySelector('.is-invalid')) { form.querySelector('.is-invalid').focus(); return; }
+
+        Ui.setBusy(submit, true, 'Logging in…');
+        try {
+          var user = await Auth.login(email.value.trim(), password.value);
+          location.href = destination(user);
+        } catch (err) {
+          Ui.setBusy(submit, false);
+          Ui.showAlert(alertBox, err.message || 'Login failed.');
+          password.value = '';
+          password.focus();
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

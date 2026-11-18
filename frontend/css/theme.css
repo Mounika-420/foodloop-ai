@@ -1,0 +1,85 @@
+/* FoodLoop AI design tokens. Green/white with a dark mode (data-bs-theme="dark"). */
+:root {
+  --fl-primary: #2E7D32;
+  --fl-primary-dark: #256628;
+  --fl-primary-light: #E8F5E9;
+  --fl-accent: #66BB6A;
+  --fl-ink: #1F2933;
+  --fl-surface: #FFFFFF;
+  --fl-surface-2: #F4F8F5;
+
+  --bs-primary: #2E7D32;
+  --bs-primary-rgb: 46, 125, 50;
+  --bs-link-color: #2E7D32;
+  --bs-link-color-rgb: 46, 125, 50;
+  --bs-link-hover-color: #1B5E20;
+  --bs-link-hover-color-rgb: 27, 94, 32;
+  --bs-body-font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --bs-body-color: #1F2933;
+  --bs-body-color-rgb: 31, 41, 51;
+  --bs-body-bg: #FFFFFF;
+  --bs-border-radius: 0.5rem;
+  --bs-border-radius-lg: 0.75rem;
+}
+
+[data-bs-theme="dark"] {
+  --fl-surface: #18211E;
+  --fl-surface-2: #121816;
+  --fl-primary-light: #1E2E24;
+  --bs-primary: #66BB6A;
+  --bs-primary-rgb: 102, 187, 106;
+  --bs-body-color: #E6EDE9;
+  --bs-body-color-rgb: 230, 237, 233;
+  --bs-body-bg: #121816;
+  --bs-body-bg-rgb: 18, 24, 22;
+  --bs-secondary-color: rgba(230, 237, 233, 0.72);
+  --bs-secondary-bg: #1D2824;
+  --bs-tertiary-bg: #18211E;
+  --bs-border-color: #2A3A34;
+  --bs-link-color: #81C784;
+  --bs-link-color-rgb: 129, 199, 132;
+  --bs-link-hover-color: #A5D6A7;
+  --bs-link-hover-color-rgb: 165, 214, 167;
+}
+
+body { background-color: var(--bs-body-bg); }
+
+.btn-primary {
+  --bs-btn-bg: #2E7D32;
+  --bs-btn-border-color: #2E7D32;
+  --bs-btn-color: #fff;
+  --bs-btn-hover-bg: #256628;
+  --bs-btn-hover-border-color: #256628;
+  --bs-btn-hover-color: #fff;
+  --bs-btn-active-bg: #1F5622;
+  --bs-btn-active-border-color: #1F5622;
+  --bs-btn-active-color: #fff;
+  --bs-btn-disabled-bg: #2E7D32;
+  --bs-btn-disabled-border-color: #2E7D32;
+  --bs-btn-focus-shadow-rgb: 46, 125, 50;
+}
+
+.btn-outline-primary {
+  --bs-btn-color: #2E7D32;
+  --bs-btn-border-color: #2E7D32;
+  --bs-btn-hover-bg: #2E7D32;
+  --bs-btn-hover-border-color: #2E7D32;
+  --bs-btn-hover-color: #fff;
+  --bs-btn-active-bg: #256628;
+  --bs-btn-active-border-color: #256628;
+  --bs-btn-active-color: #fff;
+  --bs-btn-focus-shadow-rgb: 46, 125, 50;
+}
+
+[data-bs-theme="dark"] .btn-outline-primary {
+  --bs-btn-color: #81C784;
+  --bs-btn-border-color: #81C784;
+}
+
+.form-control:focus, .form-select:focus {
+  border-color: var(--fl-accent);
+  box-shadow: 0 0 0 0.2rem rgba(102, 187, 106, 0.3);
+}
+
+/* keep focus rings visible (WCAG) */
+:focus-visible { outline: 3px solid var(--fl-accent); outline-offset: 2px; }
