@@ -40,7 +40,7 @@
         <option value="DONE">Completed</option>
         <option value="CLOSED">Cancelled / expired</option>
       </select>
-      <span id="count" class="small text-secondary ms-auto" role="status"></span>
+      <span id="count" class="small text-secondary ms-auto" role="status"></span><span id="pager" class="d-flex align-items-center gap-2" hidden><button id="prev" type="button" class="btn btn-outline-secondary btn-sm">&lsaquo; Prev</button><span id="pageinfo" class="small text-secondary"></span><button id="next" type="button" class="btn btn-outline-secondary btn-sm">Next &rsaquo;</button></span>
     </div>
 
     <div id="list" class="d-grid gap-3"><div class="fl-card p-4"><span class="fl-skeleton" style="height:3rem"></span></div></div>
@@ -57,7 +57,7 @@
 
       var listEl = document.getElementById('list');
       var alertBox = document.getElementById('alert');
-      var all = [];
+      var all = [], page = 0, totalPages = 1, total = 0;
 
       var GROUP = {
         AVAILABLE: 'OPEN', MATCHED: 'OPEN',
@@ -70,7 +70,7 @@
       function card(d) {
         var g = GROUP[d.status] || 'CLOSED';
         var cancellable = d.status === 'AVAILABLE' || d.status === 'MATCHED';
-        var cat = d.categoryName || (d.category && d.category.name) || '';
+        var cat = d.categoryName || (d.category && (typeof d.category === 'string' ? d.category : d.category.name)) || '';
         var meta = [];
         if (cat) { meta.push(esc(cat)); }
         meta.push(esc(d.quantity) + ' ' + esc(String(d.unit || '').toLowerCase()));
@@ -90,7 +90,7 @@
       function render() {
         var f = document.getElementById('filter').value;
         var rows = all.filter(function (d) { return !f || GROUP[d.status] === f || (f === 'CLOSED' && !GROUP[d.status]); });
-        document.getElementById('count').textContent = rows.length + ' of ' + all.length;
+        document.getElementById('count').textContent = rows.length + ' shown · ' + total + ' total';
         if (!rows.length) {
           listEl.innerHTML = '<div class="fl-card"><div class="fl-empty"><i class="bi bi-box-seam" aria-hidden="true"></i>' +
             (all.length ? 'No donations with this status.' : 'No donations yet. Post your first one.') + '</div></div>';
@@ -99,11 +99,20 @@
         listEl.innerHTML = rows.map(card).join('');
       }
 
+      function updatePager() {
+        document.getElementById('pager').hidden = totalPages <= 1;
+        document.getElementById('pageinfo').textContent = 'Page ' + (page + 1) + ' of ' + totalPages;
+        document.getElementById('prev').disabled = page <= 0;
+        document.getElementById('next').disabled = page >= totalPages - 1;
+      }
       function load() {
         Ui.clearAlert(alertBox);
-        return Api.get('/api/donations/mine').then(function (r) {
+        return Api.get('/api/donations/mine', { query: { page: page, size: 10 } }).then(function (r) {
           all = Array.isArray(r) ? r : ((r && r.content) || []);
+          totalPages = (r && r.totalPages) || 1;
+          total = (r && r.totalElements != null) ? r.totalElements : all.length;
           all.sort(function (a, b) { return b.id - a.id; });
+          updatePager();
           render();
         }).catch(function (e) {
           listEl.innerHTML = '';
@@ -147,6 +156,8 @@
       });
 
       document.getElementById('filter').addEventListener('change', render);
+      document.getElementById('prev').addEventListener('click', function () { if (page > 0) { page--; load(); window.scrollTo({ top: 0 }); } });
+      document.getElementById('next').addEventListener('click', function () { if (page < totalPages - 1) { page++; load(); window.scrollTo({ top: 0 }); } });
       load();
     })();
   </script>
