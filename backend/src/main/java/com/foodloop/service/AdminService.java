@@ -52,6 +52,9 @@ public class AdminService {
     @Transactional(readOnly = true)
     public PagedResult<AdminUserResponse> users(String role, UserStatus status, String q, Pageable pageable) {
         String r = role == null ? "" : role.trim().toUpperCase();
+        if (!r.isEmpty() && !java.util.List.of("ADMIN", "DONOR", "NGO", "VOLUNTEER").contains(r)) {
+            throw new BadRequestException("role must be one of ADMIN, DONOR, NGO, VOLUNTEER");
+        }
         return PagedResult.from(userRepository.search(r, status, clean(q), safe(pageable)).map(AdminService::toUser));
     }
 
