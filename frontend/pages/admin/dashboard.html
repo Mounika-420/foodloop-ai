@@ -18,26 +18,47 @@
   <script src="../../js/api.js"></script>
   <script src="../../js/guard.js"></script>
   <script>FoodLoopGuard.require(['ADMIN']);</script>
+  <style>
+    .fl-bar-track { background: var(--bs-secondary-bg); border-radius: 4px; height: 10px; overflow: hidden; }
+    .fl-bar-fill { background: var(--fl-primary); height: 100%; border-radius: 4px; }
+    .fl-stat a { text-decoration: none; }
+  </style>
 </head>
 <body>
   <main id="content" class="fl-main" tabindex="-1">
-    <h1 class="h3 mb-1">Welcome, <span id="who"></span></h1>
-    <p class="text-secondary">Your Admin dashboard is being built. Pages appear here step by step.</p>
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+      <div>
+        <h1 class="h3 mb-1">Welcome, <span id="who"></span></h1>
+        <p class="text-secondary mb-0">Platform activity at a glance.</p>
+      </div>
+      <button id="refresh" type="button" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-clockwise me-1" aria-hidden="true"></i>Refresh</button>
+    </div>
+
+    <div id="alert" class="alert alert-danger" role="alert" hidden></div>
+
+    <div class="row g-3 mb-3">
+      <div class="col-6 col-xl-3"><div class="fl-card fl-stat"><div class="text-secondary small mb-1">Donations</div><div class="fl-stat-value" id="s-total">–</div><div class="small text-secondary" id="s-week"></div></div></div>
+      <div class="col-6 col-xl-3"><div class="fl-card fl-stat"><div class="text-secondary small mb-1">Food rescued</div><div class="fl-stat-value" id="s-rescued">–</div><div class="small text-secondary" id="s-posted"></div></div></div>
+      <div class="col-6 col-xl-3"><div class="fl-card fl-stat"><div class="text-secondary small mb-1">Deliveries confirmed</div><div class="fl-stat-value" id="s-conf">–</div><div class="small text-secondary" id="s-deliv"></div></div></div>
+      <div class="col-6 col-xl-3"><div class="fl-card fl-stat"><div class="text-secondary small mb-1">Pending verification</div><div class="fl-stat-value" id="s-pend">–</div><div class="small"><a href="verification.html">Review registrations</a></div></div></div>
+    </div>
+
+    <div class="row g-3 mb-3">
+      <div class="col-lg-6"><div class="fl-card p-3 h-100">
+        <h2 class="h6 mb-3">Donations by category</h2>
+        <div id="cats" class="d-grid gap-2"><span class="fl-skeleton" style="height:5rem"></span></div>
+      </div></div>
+      <div class="col-lg-6"><div class="fl-card p-3 h-100">
+        <h2 class="h6 mb-3">Donations by status</h2>
+        <div id="status" class="d-flex flex-wrap gap-2"><span class="fl-skeleton" style="height:2rem;width:60%"></span></div>
+        <h2 class="h6 mt-4 mb-2">Volunteers</h2>
+        <div id="vols" class="d-flex flex-wrap gap-2"></div>
+      </div></div>
+    </div>
 
     <div class="row g-3">
-      <div class="col-md-6 col-xl-4">
-        <div class="fl-card fl-stat">
-          <div class="text-secondary small mb-1">Backend API</div>
-          <div class="fl-stat-value" id="api-status"><span class="fl-skeleton" style="width:6rem;height:1.75rem"></span></div>
-        </div>
-      </div>
-      <div class="col-md-6 col-xl-4" id="ai-card" hidden>
-        <div class="fl-card fl-stat">
-          <div class="text-secondary small mb-1">AI service</div>
-          <div class="fl-stat-value" id="ai-status"><span class="fl-skeleton" style="width:6rem;height:1.75rem"></span></div>
-          <div class="small text-secondary mt-1" id="ai-detail"></div>
-        </div>
-      </div>
+      <div class="col-md-6 col-xl-4"><div class="fl-card fl-stat"><div class="text-secondary small mb-1">Backend API</div><div class="fl-stat-value" id="api-status"><span class="fl-skeleton" style="width:6rem;height:1.75rem"></span></div></div></div>
+      <div class="col-md-6 col-xl-8"><div class="fl-card fl-stat"><div class="text-secondary small mb-1">AI service</div><div class="fl-stat-value" id="ai-status"><span class="fl-skeleton" style="width:6rem;height:1.75rem"></span></div><div class="small text-secondary mt-1" id="ai-detail"></div></div></div>
     </div>
   </main>
 
@@ -46,26 +67,63 @@
   <script src="../../js/layout.js"></script>
   <script>
     (function () {
+      var Ui = FoodLoopUi, Api = FoodLoopApi, esc = Ui.escapeHtml;
       var user = FoodLoopAuth.getUser();
       if (!user) { return; }
       FoodLoopLayout.mount({ active: 'dashboard' });
       document.getElementById('who').textContent = user.fullName;
+      var alertBox = document.getElementById('alert');
+      function $(id) { return document.getElementById(id); }
+      function n(v) { return Number(v || 0).toLocaleString('en-IN'); }
+      function label(s) { return String(s || '').toLowerCase().replace(/_/g, ' ').replace(/^./, function (c) { return c.toUpperCase(); }); }
+      function chips(map, el, tone) {
+        var keys = Object.keys(map || {});
+        el.innerHTML = keys.length ? keys.map(function (k) {
+          return '<span class="badge text-bg-' + tone + '">' + esc(label(k)) + ' · ' + n(map[k]) + '</span>';
+        }).join('') : '<span class="small text-secondary">No data yet.</span>';
+      }
 
-      var api = document.getElementById('api-status');
-      FoodLoopApi.get('/actuator/health', { auth: false })
-        .then(function (h) { api.textContent = h && h.status === 'UP' ? 'Connected' : 'Problem'; })
-        .catch(function () { api.textContent = 'Unreachable'; });
+      function loadStats() {
+        Ui.clearAlert(alertBox);
+        Api.get('/api/admin/stats').then(function (s) {
+          var d = s.donations || {}, v = s.deliveries || {};
+          $('s-total').textContent = n(d.total);
+          $('s-week').textContent = n(d.last7Days) + ' in the last 7 days';
+          $('s-rescued').textContent = Ui.formatKg(d.rescuedKg);
+          $('s-posted').textContent = Ui.formatKg(d.totalKg) + ' posted in total';
+          $('s-conf').textContent = n(v.confirmed);
+          $('s-deliv').textContent = n(v.inProgress) + ' in progress · ' + n(v.failed) + ' failed · ' + Ui.formatKg(v.receivedKg) + ' received';
+          var cats = (s.byCategory || []).slice().sort(function (a, b) { return Number(b.kg) - Number(a.kg); });
+          var max = cats.reduce(function (m, c) { return Math.max(m, Number(c.kg) || 0); }, 0) || 1;
+          $('cats').innerHTML = cats.length ? cats.map(function (c) {
+            var pct = Math.max(2, (Number(c.kg) / max) * 100);
+            return '<div><div class="d-flex justify-content-between small"><span>' + esc(c.category) + '</span><span class="text-secondary">' + n(c.donations) + ' · ' + esc(Ui.formatKg(c.kg)) + '</span></div>' +
+              '<div class="fl-bar-track" role="img" aria-label="' + esc(c.category) + ': ' + esc(Ui.formatKg(c.kg)) + '"><div class="fl-bar-fill" style="width:' + pct.toFixed(0) + '%"></div></div></div>';
+          }).join('') : '<span class="small text-secondary">No donations yet.</span>';
+          chips(d.byStatus, $('status'), 'secondary');
+          var vo = s.volunteers || {};
+          var m = {}; m['Total'] = vo.total; Object.keys(vo.byAvailability || {}).forEach(function (k) { m[k] = vo.byAvailability[k]; });
+          chips(m, $('vols'), 'success');
+        }).catch(function (e) { Ui.showAlert(alertBox, e.message); });
 
-      if (user.role === 'ADMIN') {
-        document.getElementById('ai-card').hidden = false;
-        var ai = document.getElementById('ai-status'), detail = document.getElementById('ai-detail');
-        FoodLoopApi.get('/api/ai/status').then(function (s) {
-          ai.textContent = s.reachable ? 'Online' : 'Offline (rule-based fallback)';
-          detail.textContent = s.reachable
+        Api.get('/api/admin/verifications', { query: { status: 'PENDING' } }).then(function (r) {
+          var list = Array.isArray(r) ? r : ((r && r.content) || []);
+          $('s-pend').textContent = n(list.length);
+        }).catch(function () { $('s-pend').textContent = '–'; });
+
+        Api.get('/actuator/health', { auth: false })
+          .then(function (h) { $('api-status').textContent = h && h.status === 'UP' ? 'Connected' : 'Problem'; })
+          .catch(function () { $('api-status').textContent = 'Unreachable'; });
+
+        Api.get('/api/ai/status').then(function (s) {
+          $('ai-status').textContent = s.reachable ? 'Online' : 'Offline (rule-based fallback)';
+          $('ai-detail').textContent = s.reachable
             ? (s.models || []).map(function (m) { return m.name + ': ' + m.algorithm + ' (MAE ' + m.mae + ')'; }).join(' · ')
             : (s.message || '');
-        }).catch(function (e) { ai.textContent = 'Unknown'; detail.textContent = e.message; });
+        }).catch(function (e) { $('ai-status').textContent = 'Unknown'; $('ai-detail').textContent = e.message; });
       }
+      $('refresh').addEventListener('click', loadStats);
+      loadStats();
     })();
   </script>
 </body>
