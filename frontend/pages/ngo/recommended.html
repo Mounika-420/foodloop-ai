@@ -141,7 +141,7 @@
           var ok = await Ui.confirm({ title: 'Accept this offer?', message: 'Accept ' + name + '. Other NGOs will no longer be offered it.', confirmText: 'Accept', cancelText: 'Not now' });
           if (!ok) { return; }
           Ui.setBusy(btn, true, 'Accepting…');
-          try { await Api.post('/api/ngo/matches/' + id + '/accept', {}); Ui.toast('Offer accepted.'); await load(); }
+          try { await Api.post('/api/ngo/matches/' + id + '/accept', {}); var dd = (o && o.donation) || {}; location.href = FoodLoopConfig.pageUrl('pages/ngo/pickups.html') + '?schedule=' + encodeURIComponent(dd.id) + '&name=' + encodeURIComponent(dd.foodName || '') + '&start=' + encodeURIComponent(dd.pickupWindowStart || '') + '&end=' + encodeURIComponent(dd.pickupWindowEnd || ''); }
           catch (err) { Ui.setBusy(btn, false); Ui.toast(err.message, 'danger'); await load(); }
         } else {
           rejectId = id;
