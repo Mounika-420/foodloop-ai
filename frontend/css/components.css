@@ -49,3 +49,5 @@
 @media (prefers-reduced-motion: reduce) { .fl-skeleton { animation: none; } }
 
 .fl-footer { border-top: 1px solid var(--bs-border-color); color: var(--bs-secondary-color); }
+/* Bootstrap utilities like .d-flex would otherwise override the hidden attribute. */
+[hidden] { display: none !important; }
