@@ -21,51 +21,52 @@
 </head>
 <body>
   <main id="content" class="fl-main" tabindex="-1">
-    <h1 class="h3 mb-1">Welcome, <span id="who"></span></h1>
-    <p class="text-secondary">Your Donor dashboard is being built. Pages appear here step by step.</p>
-
-    <div class="row g-3">
-      <div class="col-md-6 col-xl-4">
-        <div class="fl-card fl-stat">
-          <div class="text-secondary small mb-1">Backend API</div>
-          <div class="fl-stat-value" id="api-status"><span class="fl-skeleton" style="width:6rem;height:1.75rem"></span></div>
-        </div>
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+      <div>
+        <h1 class="h3 mb-1">Welcome, <span id="who"></span></h1>
+        <p class="text-secondary mb-0">Your surplus food, from posting to delivery.</p>
       </div>
-      <div class="col-md-6 col-xl-4" id="ai-card" hidden>
-        <div class="fl-card fl-stat">
-          <div class="text-secondary small mb-1">AI service</div>
-          <div class="fl-stat-value" id="ai-status"><span class="fl-skeleton" style="width:6rem;height:1.75rem"></span></div>
-          <div class="small text-secondary mt-1" id="ai-detail"></div>
-        </div>
-      </div>
+      <div class="d-flex gap-2"><a class="btn btn-primary btn-sm" href="add-donation.html"><i class="bi bi-plus-circle me-1" aria-hidden="true"></i>Add donation</a><a class="btn btn-outline-primary btn-sm" href="my-donations.html">My donations</a></div>
     </div>
+    <div id="alert" class="alert alert-danger" role="alert" hidden></div>
+    <div class="row g-3 mb-3"><div class="col-6 col-xl-3"><div class="fl-card fl-stat"><div class="text-secondary small mb-1">Total donations</div><div class="fl-stat-value" id="s1">&ndash;</div><div class="small text-secondary" id="s1-hint"></div></div></div><div class="col-6 col-xl-3"><div class="fl-card fl-stat"><div class="text-secondary small mb-1">Waiting for an NGO</div><div class="fl-stat-value" id="s2">&ndash;</div><div class="small text-secondary" id="s2-hint">Available or matched</div></div></div><div class="col-6 col-xl-3"><div class="fl-card fl-stat"><div class="text-secondary small mb-1">In progress</div><div class="fl-stat-value" id="s3">&ndash;</div><div class="small text-secondary" id="s3-hint">Accepted to delivered</div></div></div><div class="col-6 col-xl-3"><div class="fl-card fl-stat"><div class="text-secondary small mb-1">Completed</div><div class="fl-stat-value" id="s4">&ndash;</div><div class="small text-secondary" id="s4-hint"></div></div></div></div>
+    <div class="fl-card p-3"><h2 class="h6 mb-2">Recent donations</h2><ul id="recent" class="list-group list-group-flush"><li class="list-group-item px-0"><span class="fl-skeleton" style="height:1.2rem"></span></li></ul></div>
   </main>
-
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="../../js/ui.js"></script>
   <script src="../../js/layout.js"></script>
   <script>
     (function () {
+      var Ui = FoodLoopUi, Api = FoodLoopApi, esc = Ui.escapeHtml;
       var user = FoodLoopAuth.getUser();
       if (!user) { return; }
       FoodLoopLayout.mount({ active: 'dashboard' });
-      document.getElementById('who').textContent = user.fullName;
-
-      var api = document.getElementById('api-status');
-      FoodLoopApi.get('/actuator/health', { auth: false })
-        .then(function (h) { api.textContent = h && h.status === 'UP' ? 'Connected' : 'Problem'; })
-        .catch(function () { api.textContent = 'Unreachable'; });
-
-      if (user.role === 'ADMIN') {
-        document.getElementById('ai-card').hidden = false;
-        var ai = document.getElementById('ai-status'), detail = document.getElementById('ai-detail');
-        FoodLoopApi.get('/api/ai/status').then(function (s) {
-          ai.textContent = s.reachable ? 'Online' : 'Offline (rule-based fallback)';
-          detail.textContent = s.reachable
-            ? (s.models || []).map(function (m) { return m.name + ': ' + m.algorithm + ' (MAE ' + m.mae + ')'; }).join(' · ')
-            : (s.message || '');
-        }).catch(function (e) { ai.textContent = 'Unknown'; detail.textContent = e.message; });
+      var $ = function (id) { return document.getElementById(id); };
+      $('who').textContent = user.fullName;
+      var alertBox = $('alert');
+      function arr(r) { return Array.isArray(r) ? r : ((r && r.content) || []); }
+      function label(s) { return String(s || '').toLowerCase().replace(/_/g, ' ').replace(/^./, function (c) { return c.toUpperCase(); }); }
+      function fail(e) { Ui.showAlert(alertBox, e.message); }
+      function card(id, title, hint) {
+        return '';
       }
+      Api.get('/api/donations/mine', { query: { page: 0, size: 100 } }).then(function (r) {
+        var list = arr(r);
+        var total = r && r.totalElements != null ? r.totalElements : list.length;
+        var open = 0, prog = 0, done = 0;
+        list.forEach(function (d) {
+          if (d.status === 'AVAILABLE' || d.status === 'MATCHED') { open++; }
+          else if (['ACCEPTED', 'VOLUNTEER_ASSIGNED', 'PICKED_UP', 'IN_TRANSIT', 'DELIVERED'].indexOf(d.status) !== -1) { prog++; }
+          else if (d.status === 'COMPLETED') { done++; }
+        });
+        $('s1').textContent = total; $('s2').textContent = open; $('s3').textContent = prog; $('s4').textContent = done;
+        if (total > list.length) { $('s2-hint').textContent = 'Counted from your latest ' + list.length; }
+        var kg = list.filter(function (d) { return d.status === 'COMPLETED'; }).reduce(function (a, d) { return a + Number(d.quantityKg || 0); }, 0);
+        $('s4-hint').textContent = Ui.formatKg(kg) + ' delivered';
+        $('recent').innerHTML = list.slice(0, 5).map(function (d) {
+          return '<li class="list-group-item px-0 d-flex justify-content-between gap-2"><span>' + esc(d.foodName) + ' <span class="text-secondary small">#' + d.id + ' · ' + esc(d.quantity) + ' ' + esc(String(d.unit || '').toLowerCase()) + '</span></span><span class="badge text-bg-secondary">' + esc(label(d.status)) + '</span></li>';
+        }).join('') || '<li class="list-group-item px-0 text-secondary">No donations yet. Post your first one.</li>';
+      }).catch(fail);
     })();
   </script>
 </body>
