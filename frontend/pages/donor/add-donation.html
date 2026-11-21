@@ -123,6 +123,14 @@
           <ul id="matches" class="list-group list-group-flush"></ul>
           <button id="another" type="button" class="btn btn-outline-primary btn-sm mt-3">Add another</button>
         </div>
+        <div id="ai-card" class="fl-card p-4 mb-3" hidden>
+          <div class="d-flex justify-content-between align-items-start gap-2">
+            <h2 class="h6 mb-2"><i class="bi bi-stars me-1" aria-hidden="true"></i>AI surplus estimate</h2>
+            <span class="badge text-bg-warning">Trained on synthetic data</span>
+          </div>
+          <div data-body></div>
+          <div class="small text-secondary mt-2" data-note></div>
+        </div>
         <div id="tip" class="fl-card p-4 text-secondary small">
           <i class="bi bi-lightbulb me-1" aria-hidden="true"></i>After you post, the ranked NGOs appear here with their match score.
         </div>
@@ -144,6 +152,27 @@
       var submit = document.getElementById('submit');
       var result = document.getElementById('result');
       var tip = document.getElementById('tip');
+      var aiCard = document.getElementById('ai-card');
+      function aiEstimate() {
+        var sel = form.elements.categoryId;
+        if (!sel.value) { aiCard.hidden = true; return; }
+        var name = sel.options[sel.selectedIndex].text;
+        var date = (form.elements.pickupWindowStart.value || '').slice(0, 10);
+        aiCard.hidden = false;
+        aiCard.querySelector('[data-body]').innerHTML = '<span class="fl-skeleton" style="height:1.4rem;width:8rem"></span>';
+        aiCard.querySelector('[data-note]').textContent = '';
+        Api.get('/api/ai/surplus-prediction', { query: { category: name, date: date } }).then(function (r) {
+          if (r && r.aiAvailable && r.predictedKg != null) {
+            aiCard.querySelector('[data-body]').innerHTML = '<div class="fs-3 fw-semibold">' + Number(r.predictedKg).toFixed(1) + ' kg</div>' +
+              '<div class="small text-secondary">Typical surplus for ' + esc(name) + (date ? ' on ' + esc(date) : '') + '</div>';
+            aiCard.querySelector('[data-note]').textContent = [r.modelName, r.modelVersion ? 'v' + r.modelVersion : '', r.confidenceNote].filter(Boolean).join(' · ');
+          } else {
+            aiCard.querySelector('[data-body]').innerHTML = '<div class="small text-secondary">' + esc((r && r.message) || 'AI estimate is not available right now.') + '</div>';
+          }
+        }).catch(function (e) { aiCard.querySelector('[data-body]').innerHTML = '<div class="small text-secondary">' + esc(e.message) + '</div>'; });
+      }
+      form.elements.categoryId.addEventListener('change', aiEstimate);
+      form.elements.pickupWindowStart.addEventListener('change', function () { if (form.elements.categoryId.value) { aiEstimate(); } });
 
       function pad(n) { return (n < 10 ? '0' : '') + n; }
       function local(d) { // value for datetime-local
