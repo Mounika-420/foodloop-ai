@@ -1,6 +1,8 @@
 param([switch]$NoAi)
 $ErrorActionPreference = 'Continue'
 $root = 'C:\projects\foodloop-ai'
+if (-not $env:FOODLOOP_DB_PASSWORD) { $env:FOODLOOP_DB_PASSWORD = [Environment]::GetEnvironmentVariable('FOODLOOP_DB_PASSWORD','User') }
+if (-not $env:FOODLOOP_DB_PASSWORD) { Write-Host 'FOODLOOP_DB_PASSWORD set aagala (user environment variable venum).' -ForegroundColor Red; return }
 $b = 'http://localhost:8080'
 function Listening($port) { [bool](Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction SilentlyContinue) }
 function BackendUp { try { (Invoke-RestMethod "$b/actuator/health" -TimeoutSec 3).status -eq 'UP' } catch { $false } }
@@ -17,7 +19,7 @@ if (-not $NoAi) {
 if (-not (BackendUp)) {
     Write-Host 'Backend start aagudhu (1-2 min)...' -ForegroundColor Cyan
     $key = if ($NoAi) { '' } else { 'set AI_SERVICE_API_KEY=local-dev-ai-key-0123456789&& ' }
-    $cmd = "cd /d $root\backend && set DB_USER=foodloop_app&& set DB_PASSWORD=FoodLoopDev2026x&& set JWT_SECRET=LocalDevOnlySecretKey0123456789abcdefABCDEFGHIJ&& " + $key + "mvn spring-boot:run > $env:USERPROFILE\backend-run.log 2>&1"
+    $cmd = "cd /d $root\backend && set DB_USER=foodloop_app&& set DB_PASSWORD=$env:FOODLOOP_DB_PASSWORD&& set JWT_SECRET=LocalDevOnlySecretKey0123456789abcdefABCDEFGHIJ&& " + $key + "mvn spring-boot:run > $env:USERPROFILE\backend-run.log 2>&1"
     Start-Process cmd -WindowStyle Minimized -ArgumentList '/c', $cmd
     for ($i = 0; $i -lt 80 -and -not (BackendUp); $i++) { Start-Sleep 3 }
 }
