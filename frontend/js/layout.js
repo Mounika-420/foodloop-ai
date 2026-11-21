@@ -20,7 +20,7 @@
     ],
     ADMIN: [
       ['dashboard', 'Dashboard', 'bi-speedometer2'], ['users', 'Users', 'bi-people'],
-      ['verification', 'Verification', 'bi-patch-check'], ['profile', 'Profile', 'bi-person']
+      ['verification', 'Verification', 'bi-patch-check'], ['analytics', 'Analytics', 'bi-graph-up'], ['profile', 'Profile', 'bi-person']
     ]
   };
   var ROLE_LABEL = { DONOR: 'Donor', NGO: 'NGO', VOLUNTEER: 'Volunteer', ADMIN: 'Admin' };

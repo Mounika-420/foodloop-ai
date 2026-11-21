@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en" data-bs-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Analytics · FoodLoop AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="../../css/theme.css" rel="stylesheet">
+  <link href="../../css/components.css" rel="stylesheet">
+  <link href="../../css/dashboard.css" rel="stylesheet">
+  <script src="../../js/config.js"></script>
+  <script src="../../js/theme.js"></script>
+  <script src="../../js/auth.js"></script>
+  <script src="../../js/api.js"></script>
+  <script src="../../js/guard.js"></script>
+  <script>FoodLoopGuard.require(['ADMIN']);</script>
+  <style>
+    .fl-chart { position: relative; height: 280px; }
+    .fl-chart-tall { position: relative; height: 340px; }
+  </style>
+</head>
+<body>
+  <main id="content" class="fl-main" tabindex="-1">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+      <div>
+        <h1 class="h3 mb-1">Analytics</h1>
+        <p class="text-secondary mb-0">Donation activity and AI demand forecasts.</p>
+      </div>
+      <button id="refresh" type="button" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-clockwise me-1" aria-hidden="true"></i>Refresh</button>
+    </div>
+
+    <div id="alert" class="alert alert-danger" role="alert" hidden></div>
+
+    <div class="row g-3 mb-3">
+      <div class="col-lg-6"><div class="fl-card p-3 h-100">
+        <h2 class="h6 mb-3">Food by category (kg)</h2>
+        <div class="fl-chart"><canvas id="c-cat" role="img" aria-label="Doughnut chart of food in kilograms by category"></canvas></div>
+        <p id="cat-empty" class="small text-secondary mt-2 mb-0" hidden>No donations yet.</p>
+      </div></div>
+      <div class="col-lg-6"><div class="fl-card p-3 h-100">
+        <h2 class="h6 mb-3">Donations by status</h2>
+        <div class="fl-chart"><canvas id="c-status" role="img" aria-label="Bar chart of donation counts by status"></canvas></div>
+        <p id="status-empty" class="small text-secondary mt-2 mb-0" hidden>No donations yet.</p>
+      </div></div>
+    </div>
+
+    <div class="row g-3 mb-3">
+      <div class="col-lg-5"><div class="fl-card p-3 h-100">
+        <h2 class="h6 mb-3">Delivery outcomes</h2>
+        <div class="fl-chart"><canvas id="c-deliv" role="img" aria-label="Bar chart of deliveries confirmed, in progress and failed"></canvas></div>
+      </div></div>
+      <div class="col-lg-7"><div class="fl-card p-3 h-100">
+        <h2 class="h6 mb-3">Totals</h2>
+        <dl class="row mb-0 small" id="totals"><dd class="col-12 text-secondary">Loading…</dd></dl>
+      </div></div>
+    </div>
+
+    <div class="fl-card p-3 mb-3">
+      <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-2">
+        <div>
+          <h2 class="h6 mb-1"><i class="bi bi-stars me-1" aria-hidden="true"></i>AI demand forecast by area</h2>
+          <p class="small text-secondary mb-0">How much of a food category NGOs in each area are expected to need.</p>
+        </div>
+      </div>
+      <form id="pform" class="row g-2 align-items-end mb-3" novalidate>
+        <div class="col-6 col-md-3"><label for="p-cat" class="form-label small mb-1">Category</label><select id="p-cat" class="form-select form-select-sm"></select></div>
+        <div class="col-6 col-md-3"><label for="p-date" class="form-label small mb-1">Date (optional)</label><input id="p-date" type="date" class="form-control form-control-sm"></div>
+        <div class="col-6 col-md-3"><label for="p-hour" class="form-label small mb-1">Hour of day</label><select id="p-hour" class="form-select form-select-sm"></select></div>
+        <div class="col-6 col-md-3"><button id="p-go" type="submit" class="btn btn-primary btn-sm w-100">Predict</button></div>
+      </form>
+      <div id="p-alert" class="alert alert-warning" role="status" hidden></div>
+      <div class="fl-chart-tall"><canvas id="c-demand" role="img" aria-label="Bar chart of predicted demand in kilograms for each area"></canvas></div>
+      <p id="p-note" class="small text-secondary mt-2 mb-0">Choose a category and press Predict.</p>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="../../js/ui.js"></script>
+  <script src="../../js/layout.js"></script>
+  <script>
+    (function () {
+      var Ui = FoodLoopUi, Api = FoodLoopApi;
+      var user = FoodLoopAuth.getUser();
+      if (!user) { return; }
+      FoodLoopLayout.mount({ active: 'analytics' });
+      function $(id) { return document.getElementById(id); }
+      function n(v) { return Number(v || 0).toLocaleString('en-IN'); }
+      function label(s) { return String(s || '').toLowerCase().replace(/_/g, ' ').replace(/^./, function (c) { return c.toUpperCase(); }); }
+      var alertBox = $('alert');
+      var AREAS = ['RS Puram', 'Race Course', 'Gandhipuram', 'Peelamedu', 'Saibaba Colony', 'Town Hall', 'Ukkadam', 'Singanallur'];
+      var PALETTE = ['#2E7D32', '#66BB6A', '#A5D6A7', '#26A69A', '#FFB74D', '#8D6E63', '#90A4AE', '#7E57C2'];
+      var charts = {}, lastStats = null, lastDemand = null;
+
+      function applyDefaults() {
+        var cs = getComputedStyle(document.body);
+        Chart.defaults.color = cs.color;
+        Chart.defaults.borderColor = getComputedStyle(document.documentElement).getPropertyValue('--bs-border-color').trim() || 'rgba(128,128,128,.25)';
+        Chart.defaults.font.family = 'Inter, system-ui, sans-serif';
+      }
+      function draw(id, cfg) {
+        if (charts[id]) { charts[id].destroy(); }
+        charts[id] = new Chart($(id), cfg);
+      }
+      function noLegendBar(labels, data, color, horizontal) {
+        return {
+          type: 'bar',
+          data: { labels: labels, datasets: [{ data: data, backgroundColor: color, borderRadius: 4 }] },
+          options: {
+            indexAxis: horizontal ? 'y' : 'x', responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: { x: { beginAtZero: true, ticks: { precision: 0 } }, y: { beginAtZero: true, ticks: { precision: 0 } } }
+          }
+        };
+      }
+
+      function renderStats(s) {
+        applyDefaults();
+        var d = s.donations || {}, v = s.deliveries || {};
+        var cats = (s.byCategory || []).slice().sort(function (a, b) { return Number(b.kg) - Number(a.kg); });
+        $('cat-empty').hidden = cats.length > 0;
+        draw('c-cat', {
+          type: 'doughnut',
+          data: { labels: cats.map(function (c) { return c.category; }), datasets: [{ data: cats.map(function (c) { return Number(c.kg) || 0; }), backgroundColor: cats.map(function (c, i) { return PALETTE[i % PALETTE.length]; }), borderWidth: 0 }] },
+          options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' }, tooltip: { callbacks: { label: function (ctx) { return ' ' + ctx.label + ': ' + n(ctx.parsed) + ' kg'; } } } } }
+        });
+        var st = d.byStatus || {}, keys = Object.keys(st);
+        $('status-empty').hidden = keys.length > 0;
+        draw('c-status', noLegendBar(keys.map(label), keys.map(function (k) { return Number(st[k]) || 0; }), '#2E7D32', false));
+        draw('c-deliv', noLegendBar(['Confirmed', 'In progress', 'Failed'], [Number(v.confirmed) || 0, Number(v.inProgress) || 0, Number(v.failed) || 0], ['#2E7D32', '#FFB74D', '#C62828'], false));
+        var rows = [
+          ['Donations posted', n(d.total)], ['Last 7 days', n(d.last7Days)],
+          ['Food posted', Ui.formatKg(d.totalKg)], ['Food rescued', Ui.formatKg(d.rescuedKg)],
+          ['Food received by NGOs', Ui.formatKg(v.receivedKg)],
+          ['Deliveries confirmed', n(v.confirmed)], ['In progress', n(v.inProgress)], ['Failed', n(v.failed)]
+        ];
+        $('totals').innerHTML = rows.map(function (r) {
+          return '<dt class="col-7 col-sm-5 fw-normal text-secondary">' + Ui.escapeHtml(r[0]) + '</dt><dd class="col-5 col-sm-7 fw-semibold">' + Ui.escapeHtml(r[1]) + '</dd>';
+        }).join('');
+        var sel = $('p-cat'), cur = sel.value;
+        sel.innerHTML = cats.map(function (c) { return '<option>' + Ui.escapeHtml(c.category) + '</option>'; }).join('');
+        if (cur) { sel.value = cur; }
+      }
+
+      function renderDemand(res, cat) {
+        applyDefaults();
+        var box = $('p-alert'), note = $('p-note');
+        box.hidden = true;
+        var good = res.filter(function (x) { return x.r && x.r.aiAvailable && x.r.predictedKg != null; });
+        if (!good.length) {
+          if (charts['c-demand']) { charts['c-demand'].destroy(); delete charts['c-demand']; }
+          var first = res[0] || {};
+          box.textContent = (first.r && first.r.message) || (first.err && first.err.message) || 'The AI service did not return a prediction.';
+          box.hidden = false;
+          note.textContent = 'No forecast available. Rule-based matching is used while the AI service is offline.';
+          return;
+        }
+        var data = res.map(function (x) { return (x.r && x.r.aiAvailable && x.r.predictedKg != null) ? Math.round(Number(x.r.predictedKg) * 10) / 10 : null; });
+        draw('c-demand', {
+          type: 'bar',
+          data: { labels: AREAS, datasets: [{ data: data, backgroundColor: '#66BB6A', borderRadius: 4 }] },
+          options: {
+            indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false }, tooltip: { callbacks: { label: function (ctx) { return ' ' + ctx.parsed.x + ' kg'; } } } },
+            scales: { x: { beginAtZero: true, title: { display: true, text: 'Predicted demand (kg) for ' + cat } } }
+          }
+        });
+        var r0 = good[0].r;
+        var parts = [r0.modelName ? 'Model: ' + r0.modelName + (r0.modelVersion ? ' v' + r0.modelVersion : '') : null,
+                     r0.trainedOnSynthetic ? 'trained on synthetic data' : null, r0.confidenceNote || null];
+        note.textContent = parts.filter(Boolean).join(' · ') + (good.length < res.length ? ' · ' + (res.length - good.length) + ' area(s) returned no forecast.' : '');
+      }
+
+      function loadStats() {
+        Ui.clearAlert(alertBox);
+        return Api.get('/api/admin/stats').then(function (s) { lastStats = s; renderStats(s); })
+          .catch(function (e) { Ui.showAlert(alertBox, e.message); });
+      }
+
+      var hourSel = $('p-hour');
+      for (var h = 0; h < 24; h++) { var o = document.createElement('option'); o.value = h; o.textContent = (h < 10 ? '0' : '') + h + ':00'; hourSel.appendChild(o); }
+      hourSel.value = '18';
+
+      $('pform').addEventListener('submit', function (e) {
+        e.preventDefault();
+        var cat = $('p-cat').value, btn = $('p-go');
+        if (!cat) { $('p-alert').textContent = 'No categories yet. Post a donation first.'; $('p-alert').hidden = false; return; }
+        Ui.setBusy(btn, true, 'Predicting…');
+        var date = $('p-date').value;
+        Promise.all(AREAS.map(function (a) {
+          var q = { category: cat, area: a, hour: hourSel.value };
+          if (date) { q.date = date; }
+          return Api.get('/api/ai/demand-prediction', { query: q })
+            .then(function (r) { return { area: a, r: r }; })
+            .catch(function (err) { return { area: a, err: err }; });
+        })).then(function (res) { lastDemand = { res: res, cat: cat }; renderDemand(res, cat); })
+          .then(function () { Ui.setBusy(btn, false); }, function () { Ui.setBusy(btn, false); });
+      });
+
+      $('refresh').addEventListener('click', loadStats);
+      new MutationObserver(function () {
+        if (lastStats) { renderStats(lastStats); }
+        if (lastDemand) { renderDemand(lastDemand.res, lastDemand.cat); }
+      }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-bs-theme'] });
+      loadStats();
+    })();
+  </script>
+</body>
+</html>
