@@ -68,7 +68,7 @@ public class HistoryService {
                 d.getId(),
                 p.getId(),
                 donation.getId(),
-                String.valueOf(donation.getCategory()),
+                donation.getCategory() == null ? null : donation.getCategory().getName(),
                 donation.getQuantityKg(),
                 p.getNgo().getUserId(),
                 p.getVolunteer() == null ? null : p.getVolunteer().getUserId(),
