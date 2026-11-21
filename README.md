@@ -22,3 +22,6 @@ Demo password for all sample accounts: `Password@123` (fictional accounts, for d
 
 ## Docs
 Start with `documentation/design/01_requirements_and_architecture.md`, then 02 to 06. Diagrams are Mermaid (render on GitHub or VS Code Markdown Preview).
+
+
+Run and demo guide: [docs/RUN-AND-DEMO.md](docs/RUN-AND-DEMO.md)  |  Start everything: `.\start-foodloop.ps1`
