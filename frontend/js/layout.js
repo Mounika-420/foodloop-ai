@@ -7,25 +7,20 @@
   var NAV = {
     DONOR: [
       ['dashboard', 'Dashboard', 'bi-speedometer2'], ['add-donation', 'Add Donation', 'bi-plus-circle'],
-      ['my-donations', 'My Donations', 'bi-box-seam'], ['matches', 'Matches', 'bi-diagram-3'],
-      ['history', 'History', 'bi-clock-history'], ['profile', 'Profile', 'bi-person']
+      ['my-donations', 'My Donations', 'bi-box-seam'], ['profile', 'Profile', 'bi-person']
     ],
     NGO: [
       ['dashboard', 'Dashboard', 'bi-speedometer2'], ['available-donations', 'Available', 'bi-basket'],
-      ['recommended', 'Recommended', 'bi-stars'], ['requirements', 'Requirements', 'bi-list-check'], ['categories', 'Categories', 'bi-tags'],
-      ['pickups', 'Pickups', 'bi-truck'], ['history', 'History', 'bi-clock-history'],
-      ['analytics', 'Analytics', 'bi-graph-up'], ['profile', 'Profile', 'bi-person']
+      ['recommended', 'Recommended', 'bi-stars'], ['categories', 'Categories', 'bi-tags'],
+      ['pickups', 'Pickups', 'bi-truck'], ['history', 'History', 'bi-clock-history'], ['profile', 'Profile', 'bi-person']
     ],
     VOLUNTEER: [
       ['dashboard', 'Dashboard', 'bi-speedometer2'], ['tasks', 'Tasks', 'bi-geo-alt'],
-      ['deliveries', 'Deliveries', 'bi-truck'], ['history', 'History', 'bi-clock-history'],
-      ['profile', 'Profile', 'bi-person']
+      ['history', 'History', 'bi-clock-history'], ['profile', 'Profile', 'bi-person']
     ],
     ADMIN: [
       ['dashboard', 'Dashboard', 'bi-speedometer2'], ['users', 'Users', 'bi-people'],
-      ['verification', 'Verification', 'bi-patch-check'], ['donations', 'Donations', 'bi-box-seam'],
-      ['analytics', 'Analytics', 'bi-graph-up'], ['reports', 'Reports', 'bi-file-earmark-text'],
-      ['feedback', 'Feedback', 'bi-chat-dots'], ['audit-logs', 'Audit Logs', 'bi-journal-text']
+      ['verification', 'Verification', 'bi-patch-check'], ['profile', 'Profile', 'bi-person']
     ]
   };
   var ROLE_LABEL = { DONOR: 'Donor', NGO: 'NGO', VOLUNTEER: 'Volunteer', ADMIN: 'Admin' };
