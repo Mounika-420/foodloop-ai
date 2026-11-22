@@ -1,0 +1,43 @@
+services:
+  - type: web
+    name: foodloop-ai-service
+    runtime: docker
+    plan: free
+    dockerfilePath: ./ai-service/Dockerfile
+    dockerContext: ./ai-service
+    envVars:
+      - key: AI_SERVICE_API_KEY
+        generateValue: true
+  - type: web
+    name: foodloop-backend
+    runtime: docker
+    plan: free
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    healthCheckPath: /actuator/health
+    envVars:
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        sync: false
+      - key: DB_NAME
+        value: foodloop_ai
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: DB_SSL
+        value: "true"
+      - key: JWT_SECRET
+        generateValue: true
+      - key: AI_SERVICE_BASE_URL
+        sync: false
+      - key: AI_SERVICE_API_KEY
+        fromService:
+          type: web
+          name: foodloop-ai-service
+          envVarKey: AI_SERVICE_API_KEY
+      - key: CORS_ORIGINS
+        sync: false
+      - key: FRONTEND_BASE_URL
+        sync: false
