@@ -69,3 +69,32 @@ Live end-to-end checks were run against a real database, including concurrent ac
 - AI models use synthetic training data and the recommender currently reproduces the rule-based order.
 - Secrets in `start-foodloop.ps1` are local development defaults only. Use real secrets and HTTPS for any deployment.
 - Pages not built yet: Donor Matches and History, NGO Requirements and Analytics, Volunteer Deliveries, Admin Donations, Analytics, Reports, Feedback and Audit Logs viewers (the backend already records audit entries), forgot/reset password pages (API exists).
+
+## Setup on a new PC (Windows)
+
+1. Install Git, JDK 17 or newer, Maven 3.9, MySQL 8.0, Python 3.11 and (optionally) VS Code. The first backend start downloads Maven dependencies, so it needs internet.
+2. Get the code: extract the submission zip or run `git clone https://github.com/Mounika-420/foodloop-ai.git`. In VS Code use File > Open Folder and choose the repository root (the folder that contains `start-foodloop.ps1`).
+3. Load the database from the repository root (enter the MySQL root password when asked). `mysql.exe` is in `C:\Program Files\MySQL\MySQL Server 8.0\bin`, add it to PATH or use the full path:
+
+        mysql -u root -p < database\schema.sql
+        mysql -u root -p < database\sample_data.sql
+        mysql -u root -p foodloop_ai < database\ngo_accepted_categories.sql
+
+4. Create the application database user with a password of your choice and store it in an environment variable. Open a new terminal afterwards so the variable is visible:
+
+        mysql -u root -p -e "CREATE USER IF NOT EXISTS 'foodloop_app'@'localhost' IDENTIFIED BY 'YOUR_PASSWORD'; GRANT ALL PRIVILEGES ON foodloop_ai.* TO 'foodloop_app'@'localhost'; FLUSH PRIVILEGES;"
+        [Environment]::SetEnvironmentVariable('FOODLOOP_DB_PASSWORD', 'YOUR_PASSWORD', 'User')
+
+5. Prepare the AI service once:
+
+        cd ai-service
+        python -m venv .venv
+        .\.venv\Scripts\python.exe -m pip install -r requirements.txt
+        cd ..
+
+   The trained models are included in `ai-service/models/`, so no training step is needed.
+6. Start everything from the repository root. If PowerShell blocks the script, run it with `powershell -ExecutionPolicy Bypass -File .\start-foodloop.ps1`:
+
+        .\start-foodloop.ps1
+
+   Then open http://127.0.0.1:5500/index.html and follow the demo script above. The start script uses the local development JWT secret and AI key, replace them for any real deployment.

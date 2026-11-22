@@ -1,6 +1,6 @@
 param([switch]$NoAi)
 $ErrorActionPreference = 'Continue'
-$root = 'C:\projects\foodloop-ai'
+$root = $PSScriptRoot
 if (-not $env:FOODLOOP_DB_PASSWORD) { $env:FOODLOOP_DB_PASSWORD = [Environment]::GetEnvironmentVariable('FOODLOOP_DB_PASSWORD','User') }
 if (-not $env:FOODLOOP_DB_PASSWORD -and (Test-Path "$env:USERPROFILE\.foodloop\db-password.txt")) { $env:FOODLOOP_DB_PASSWORD = (Get-Content "$env:USERPROFILE\.foodloop\db-password.txt" -Raw).Trim() }
 if (-not $env:FOODLOOP_DB_PASSWORD) { Write-Host 'FOODLOOP_DB_PASSWORD set aagala (user environment variable venum).' -ForegroundColor Red; return }
