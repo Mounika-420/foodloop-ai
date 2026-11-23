@@ -17,9 +17,9 @@ services:
     healthCheckPath: /actuator/health
     envVars:
       - key: DB_HOST
-        sync: false
+        value: gateway01.ap-southeast-1.prod.aws.tidbcloud.com
       - key: DB_PORT
-        sync: false
+        value: "4000"
       - key: DB_NAME
         value: foodloop_ai
       - key: DB_USER
