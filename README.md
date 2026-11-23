@@ -42,7 +42,7 @@ Prerequisites: JDK 17+, Maven, MySQL 8, Python 3.10+.
     mysql -u root -p < database\sample_data.sql
     mysql -u root -p foodloop_ai < database\ngo_accepted_categories.sql
 
-**Step 2 - database user.** Create a MySQL user `foodloop_app` and keep its password outside the repository, in `%USERPROFILE%\.foodloop\db-password.txt` or in the user environment variable `FOODLOOP_DB_PASSWORD`.
+**Step 2 - database user.** Create a MySQL user `foodloop_app` and keep its password outside the repository, in `%USERPROFILE%\.foodloop\db-password.txt` or in the user environment variable `FOODLOOP_DB_PASSWORD`. The JWT secret goes in `%USERPROFILE%\.foodloop\jwt-secret.txt` (a random 64-character hex string) or in `FOODLOOP_JWT_SECRET`.
 
 **Step 3 - AI service virtual environment (once):**
 
@@ -55,6 +55,8 @@ Prerequisites: JDK 17+, Maven, MySQL 8, Python 3.10+.
     .\start-foodloop.ps1
 
 This starts the AI service (:5000), the backend (:8080) and the frontend (:5500) and opens the browser. Use `-NoAi` to run without the AI service (rule-based matching only).
+
+Fresh demo data (expiry times are relative to the current time): after starting the system run `.\demo-seed.ps1`. It posts 12 donations and moves some of them through acceptance, pickup and delivery.
 
 More detail: [docs/RUN-AND-DEMO.md](docs/RUN-AND-DEMO.md)
 
@@ -103,6 +105,65 @@ The full contract is in `documentation/design/05_api_contract.md`.
 - Backend: 213 JUnit/Mockito/Spring Boot tests, all passing (`cd backend`, then `mvn test`).
 - AI service: 40 pytest tests, all passing (`cd ai-service`, then `.\.venv\Scripts\python -m pytest`).
 - System test log: [documentation/testing/test-report.md](documentation/testing/test-report.md)
+
+## Screenshots
+
+**Landing page**
+
+![Landing page](screenshots/00-landing.png)
+
+**Registration**
+
+![Registration](screenshots/00-register.png)
+
+**Login**
+
+![Login](screenshots/01-login.png)
+
+**Donor dashboard**
+
+![Donor dashboard](screenshots/02-donor-dashboard.png)
+
+**Add donation with the AI surplus hint**
+
+![Add donation with the AI surplus hint](screenshots/03-donor-add-donation-ai.png)
+
+**My donations**
+
+![My donations](screenshots/04-donor-my-donations.png)
+
+**NGO dashboard**
+
+![NGO dashboard](screenshots/05-ngo-dashboard-ai.png)
+
+**NGO recommended donations with score breakdown**
+
+![NGO recommended donations with score breakdown](screenshots/06-ngo-recommended.png)
+
+**NGO pickups**
+
+![NGO pickups](screenshots/07-ngo-pickups.png)
+
+**NGO history**
+
+![NGO history](screenshots/08-ngo-history.png)
+
+**Volunteer tasks**
+
+![Volunteer tasks](screenshots/09-volunteer-tasks.png)
+
+**Admin dashboard**
+
+![Admin dashboard](screenshots/10-admin-dashboard.png)
+
+**Admin verification**
+
+![Admin verification](screenshots/11-admin-verification.png)
+
+**Backend test run**
+
+![Backend test run](screenshots/12-backend-tests.png)
+
 
 ## Documentation
 
