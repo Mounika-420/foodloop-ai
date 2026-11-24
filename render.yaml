@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: foodloop-ai-service
+    name: foodloop-ml-service
     runtime: docker
     plan: free
     dockerfilePath: ./ai-service/Dockerfile
@@ -9,7 +9,7 @@ services:
       - key: AI_SERVICE_API_KEY
         generateValue: true
   - type: web
-    name: foodloop-backend
+    name: foodloop-api
     runtime: docker
     plan: free
     dockerfilePath: ./backend/Dockerfile
@@ -35,7 +35,7 @@ services:
       - key: AI_SERVICE_API_KEY
         fromService:
           type: web
-          name: foodloop-ai-service
+          name: foodloop-ml-service
           envVarKey: AI_SERVICE_API_KEY
       - key: CORS_ORIGINS
         sync: false
