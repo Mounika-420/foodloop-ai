@@ -1,0 +1,5 @@
+{
+  "rewrites": [
+    { "source": "/api/:path*", "destination": "https://foodloop-backend-9l5g.onrender.com/api/:path*" }
+  ]
+}
